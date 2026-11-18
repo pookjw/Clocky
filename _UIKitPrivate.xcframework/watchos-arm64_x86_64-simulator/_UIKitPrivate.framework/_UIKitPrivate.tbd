@@ -27,6 +27,7 @@ exports:
       UICollectionViewController,
       UIColor,
       UIGestureRecognizer,
+      UIImage,
       UIListContentConfiguration,
       UILongPressGestureRecognizer,
       UISceneConfiguration,

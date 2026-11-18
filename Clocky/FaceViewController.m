@@ -1,17 +1,20 @@
 #import "FaceViewController.h"
 #import "FaceBundleListViewController.h"
+#import "FaceEditingViewController.h"
 #import "Defines.h"
 #import <NanoTimeKit/NanoTimeKit.h>
 #import <CoreMotion/CoreMotion.h>
 
-@interface FaceViewController () <FaceBundleListViewControllerDelegate>
+@interface FaceViewController () <FaceBundleListViewControllerDelegate, FaceEditingViewControllerDelegate>
 @property (nullable, nonatomic, retain, direct) NTKFaceViewController *faceViewController;
+@property (nullable, nonatomic, retain, direct) NTKFace *selectedFace;
 @end
 
 @implementation FaceViewController
 
 - (void)dealloc {
     [_faceViewController release];
+    [_selectedFace release];
     [super dealloc];
 }
 
@@ -41,30 +44,55 @@
 }
 
 - (void)showInitialFace __attribute__((objc_direct)) {
-    CLKDevice *device = CLKDevice.currentDevice;
-    NSString * _Nullable selectedFaceIdentifier = [NSUserDefaults.standardUserDefaults stringForKey:selectedFaceIdentifierKey()];
-
+    NTKFace * _Nullable savedFace = [self loadSelectedFace];
+    if (savedFace != nil) {
+        [self showFace:savedFace];
+        return;
+    }
     __block __kindof NTKFaceBundle * _Nullable firstBundle = nil;
-    __block __kindof NTKFaceBundle * _Nullable matchedBundle = nil;
-    
-    [NTKFaceBundleManager.sharedManager enumerateFaceBundlesOnDevice:device includingLegacy:YES withBlock:^(__kindof NTKFaceBundle *faceBundle) {
+    [NTKFaceBundleManager.sharedManager enumerateFaceBundlesOnDevice:CLKDevice.currentDevice includingLegacy:YES withBlock:^(__kindof NTKFaceBundle *faceBundle) {
         if (firstBundle == nil) {
             firstBundle = [faceBundle retain];
         }
-        if (selectedFaceIdentifier != nil && matchedBundle == nil) {
-            NSString * _Nullable identifier = [[faceBundle class] identifier];
-            if ([identifier isEqualToString:selectedFaceIdentifier]) {
-                matchedBundle = [faceBundle retain];
+    }];
+    if (firstBundle != nil) {
+        NTKFace * _Nullable face = [firstBundle defaultFaceForDevice:CLKDevice.currentDevice];
+        if (face != nil) {
+            [self showFace:face];
+            if ([NSUserDefaults.standardUserDefaults dataForKey:selectedFaceArchiveKey()] == nil) {
+                [self saveSelectedFace:face];
             }
         }
-    }];
-    
-    __kindof NTKFaceBundle * _Nullable initialBundle = matchedBundle != nil ? matchedBundle : firstBundle;
-    if (initialBundle != nil) {
-        [self showFaceFromBundle:initialBundle];
     }
-    [matchedBundle release];
     [firstBundle release];
+}
+
+- (nullable NTKFace *)loadSelectedFace __attribute__((objc_direct)) {
+    NSData * _Nullable data = [NSUserDefaults.standardUserDefaults dataForKey:selectedFaceArchiveKey()];
+    if (data == nil) return nil;
+    NSError * _Nullable error = nil;
+    @try {
+        NTKFace * _Nullable face = [NSKeyedUnarchiver unarchivedObjectOfClass:[NTKFace class] fromData:data error:&error];
+        if (face == nil) NSLog(@"Failed to restore selected face: %@", error);
+        return face;
+    } @catch (NSException *exception) {
+        NSLog(@"Failed to restore selected face: %@", exception);
+        return nil;
+    }
+}
+
+- (void)saveSelectedFace:(NTKFace *)face __attribute__((objc_direct)) {
+    NSError * _Nullable error = nil;
+    @try {
+        NSData * _Nullable data = [NSKeyedArchiver archivedDataWithRootObject:face requiringSecureCoding:YES error:&error];
+        if (data != nil) {
+            [NSUserDefaults.standardUserDefaults setObject:data forKey:selectedFaceArchiveKey()];
+        } else {
+            NSLog(@"Failed to archive selected face: %@", error);
+        }
+    } @catch (NSException *exception) {
+        NSLog(@"Failed to archive selected face: %@", exception);
+    }
 }
 
 - (void)configureLongPressGesture __attribute__((objc_direct)) {
@@ -73,19 +101,12 @@
     [longPressGestureRecognizer release];
 }
 
-- (void)showFaceFromBundle:(__kindof NTKFaceBundle *)faceBundle __attribute__((objc_direct)) {
+- (void)showFace:(NTKFace *)face __attribute__((objc_direct)) {
     if (self.faceViewController != nil) {
         [self.faceViewController willMoveToParentViewController:nil];
         [self.faceViewController.view removeFromSuperview];
         [self.faceViewController removeFromParentViewController];
         self.faceViewController = nil;
-    }
-    
-    CLKDevice *device = CLKDevice.currentDevice;
-    __kindof NTKFace * _Nullable face = [faceBundle defaultFaceForDevice:device];
-    if (face == nil) {
-        NSLog(@"No default face for bundle: %@", faceBundle);
-        return;
     }
     
     NTKFaceViewController *faceViewController = [[NTKFaceViewController alloc] initWithFace:face configuration:nil];
@@ -96,6 +117,7 @@
     [faceViewController didMoveToParentViewController:self];
     
     self.faceViewController = faceViewController;
+    self.selectedFace = face;
     [faceViewController release];
 }
 
@@ -113,13 +135,36 @@
 #pragma mark - FaceBundleListViewControllerDelegate
 
 - (void)faceBundleListViewController:(FaceBundleListViewController *)viewController didSelectFaceBundle:(__kindof NTKFaceBundle *)faceBundle {
-    NSString * _Nullable identifier = [[faceBundle class] identifier];
-    if (identifier != nil) {
-        [NSUserDefaults.standardUserDefaults setObject:identifier forKey:selectedFaceIdentifierKey()];
+    NTKFace * _Nullable face = [faceBundle defaultFaceForDevice:CLKDevice.currentDevice];
+    if (face == nil) {
+        NSLog(@"No default face for bundle: %@", faceBundle);
+        return;
     }
-    
-    [self showFaceFromBundle:faceBundle];
+    [self showFace:face];
+    [self saveSelectedFace:face];
     [viewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)faceBundleListViewControllerDidRequestEditing:(FaceBundleListViewController *)viewController {
+    if (self.selectedFace == nil) return;
+    [viewController dismissViewControllerAnimated:YES completion:^{
+        [self presentFaceEditor];
+    }];
+}
+
+- (void)presentFaceEditor __attribute__((objc_direct)) {
+    NTKFace * _Nullable face = self.selectedFace;
+    if (face == nil) return;
+    FaceEditingViewController *editor = [[FaceEditingViewController alloc] initWithFace:face];
+    editor.delegate = self;
+    PUICNavigationController *navigationController = [[PUICNavigationController alloc] initWithRootViewController:editor];
+    [self presentViewController:navigationController animated:YES completion:nil];
+    [navigationController release];
+    [editor release];
+}
+
+- (void)faceEditingViewController:(FaceEditingViewController *)viewController didFinishEditingFace:(NTKFace *)face {
+    [self saveSelectedFace:face];
 }
 
 @end

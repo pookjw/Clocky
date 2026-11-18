@@ -25,6 +25,9 @@
 
 - (void)configureNavigation __attribute__((objc_direct)) {
     self.title = @"Categories";
+    UIBarButtonItem *editButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"pencil"] style:UIBarButtonItemStylePlain target:self action:@selector(didSelectEdit:)];
+    self.navigationItem.leftBarButtonItem = editButton;
+    [editButton release];
     UIBarButtonItem *dismissButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(didSelectDismiss:)];
     self.navigationItem.rightBarButtonItem = dismissButton;
     [dismissButton release];
@@ -85,6 +88,13 @@
 
 - (void)didSelectDismiss:(UIBarButtonItem *)sender {
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)didSelectEdit:(UIBarButtonItem *)sender {
+    id<FaceBundleListViewControllerDelegate> delegate = self.delegate;
+    if ([delegate respondsToSelector:@selector(faceBundleListViewControllerDidRequestEditing:)]) {
+        [delegate faceBundleListViewControllerDidRequestEditing:self];
+    }
 }
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {

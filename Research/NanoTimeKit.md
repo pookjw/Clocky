@@ -44,6 +44,12 @@
 - Initialized via:
   - `- (instancetype)initWithFace:(NTKFace *)face configuration:(void (NS_NOESCAPE ^ _Nullable)(NTKFaceViewController *faceViewController))configuration;`
 
+## Editing and Persistence
+
+- The watchOS 10.5 simulator's `NTKFaceViewController` runtime metadata includes `showEditingUIAnimated:fromZoomLevel:`, `canStopEditing`, and `hideFaceEditingUIAnimated:destination:completion:`. Clocky's category-list edit button presents a separate controller for the currently selected face and uses these methods to start and finish editing. The `0` zoom level and destination are experimental; private method behavior, completion semantics, and the editor UI require device verification across watchOS versions.
+- The same runtime declares `NTKFace` as conforming to `NSSecureCoding` and `NSCopying`, with `encodeWithCoder:` and `initWithCoder:`. Clocky saves the selected face to `NSUserDefaults` as a secure keyed archive, including after editing, and attempts secure decoding on launch. It falls back to a default face on decoding failure without overwriting an existing archive until the user selects or edits a face. Archive round trips, subclass compatibility, and external photo/complication resources have not yet been verified on device.
+- The previous selected identifier is not migrated. This storage is app-local and is not a change to the system watch-face library.
+
 ## Face Filtering & Device Restrictions (Why Some Faces Are Hidden by Default)
 
 On a standard watchOS device or simulator, `-[NTKFaceBundleManager enumerateFaceBundlesOnDevice:withBlock:]` only returns ~32 of the 84 installed face bundles. Three mechanisms filter or fallback faces:

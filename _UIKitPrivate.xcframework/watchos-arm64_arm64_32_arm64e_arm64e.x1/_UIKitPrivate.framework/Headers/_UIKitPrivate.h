@@ -9,6 +9,7 @@
 #import <_UIKitPrivate/UINavigationController.h>
 #import <_UIKitPrivate/UINavigationItem.h>
 #import <_UIKitPrivate/UIBarButtonItem.h>
+#import <_UIKitPrivate/UIImage.h>
 #import <_UIKitPrivate/UICollectionView.h>
 #import <_UIKitPrivate/UICollectionViewCell.h>
 #import <_UIKitPrivate/UICollectionViewController.h>

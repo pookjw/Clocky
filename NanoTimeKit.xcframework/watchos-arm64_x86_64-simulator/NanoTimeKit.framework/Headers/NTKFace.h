@@ -3,7 +3,7 @@
 
 NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 
-@interface NTKFace : NSObject
+@interface NTKFace : NSObject <NSSecureCoding, NSCopying>
 + (BOOL)isRestrictedForDevice:(CLKDevice *)device;
 @end
 

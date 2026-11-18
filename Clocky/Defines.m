@@ -1,5 +1,5 @@
 #import "Defines.h"
 
-NSString * selectedFaceIdentifierKey(void) {
-    return @"SelectedFaceIdentifier";
+NSString * selectedFaceArchiveKey(void) {
+    return @"SelectedFaceArchive";
 }

@@ -13,6 +13,7 @@ UIKIT_EXTERN NS_SWIFT_UI_ACTOR
 @property (null_resettable, nonatomic, strong) UIView *view;
 - (void)viewDidLoad;
 - (void)viewWillAppear:(BOOL)animated;
+- (void)viewDidAppear:(BOOL)animated;
 - (void)viewDidDisappear:(BOOL)animated;
 - (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)flag completion:(void (^ _Nullable)(void))completion NS_SWIFT_DISABLE_ASYNC;
 - (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^ _Nullable)(void))completion NS_SWIFT_DISABLE_ASYNC;

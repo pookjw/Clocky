@@ -35,7 +35,7 @@ For watchOS UI, prefer an available, suitable PepperUICore component over its ge
   #define CLKY_EXTERN  extern __attribute__((visibility ("default")))
   #endif
 
-  CLKY_EXTERN NSString * selectedFaceIdentifierKey(void);
+  CLKY_EXTERN NSString * selectedFaceArchiveKey(void);
   ```
 
 ## 3. Calling Private APIs

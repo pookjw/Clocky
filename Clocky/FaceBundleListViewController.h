@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol FaceBundleListViewControllerDelegate <NSObject>
 @optional
 - (void)faceBundleListViewController:(FaceBundleListViewController *)viewController didSelectFaceBundle:(__kindof NTKFaceBundle *)faceBundle;
+- (void)faceBundleListViewControllerDidRequestEditing:(FaceBundleListViewController *)viewController;
 @end
 
 @interface FaceBundleListViewController : PUICListCollectionViewController

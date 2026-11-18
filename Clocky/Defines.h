@@ -8,6 +8,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-CLKY_EXTERN NSString * selectedFaceIdentifierKey(void);
+CLKY_EXTERN NSString * selectedFaceArchiveKey(void);
 
 NS_ASSUME_NONNULL_END
