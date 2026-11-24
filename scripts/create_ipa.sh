@@ -72,16 +72,18 @@ cleanup() {
 trap cleanup EXIT
 
 derived_data="$temp_dir/DerivedData"
-app_path="$derived_data/Build/Products/Release-iphoneos/ClockyCompanion.app"
+build_products="$derived_data/Build/Products"
+app_path="$build_products/Release-iphoneos/ClockyCompanion.app"
 staging_path="$temp_dir/staging"
 
 echo "Building iPhone app and embedded Watch app without code signing..."
 xcodebuild \
     -project "$repo_root/Clocky.xcodeproj" \
-    -scheme ClockyCompanion \
+    -target ClockyCompanion \
     -configuration Release \
     -destination 'generic/platform=iOS' \
-    -derivedDataPath "$derived_data" \
+    SYMROOT="$build_products" \
+    OBJROOT="$derived_data/Build/Intermediates" \
     COMPANION_BUNDLE_IDENTIFIER="$bundle_id" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
